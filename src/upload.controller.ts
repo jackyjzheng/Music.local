@@ -1,18 +1,22 @@
-import { Controller, Get, Post, Req, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Req, UseInterceptors, UploadedFile, Param, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { AppService } from './app.service';
 
 @Controller('upload')
 export class UploadController {
-    @Post()
+    @Post(':id')
     @UseInterceptors(FileInterceptor('file'))
-    uploadFile(@UploadedFile() file) {
-        console.log(file);
+    async uploadFile(@Param('id') userID, @UploadedFile() file) {
+        const response = {
+            originalname: file.originalname,
+            filename: file.filename
+        };
+        return response    
     }
 
-    @Get()
-    findAll(@Req() userRequest: Request): string {
-        return 'Get request';
+    @Get(':filepath')
+    getUploadedFile(@Param('filepath') musicFile, @Res() res) {
+        return res.sendFile(musicFile, { root: './files' });
     }
 }
