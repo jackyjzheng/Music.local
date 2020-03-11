@@ -1,12 +1,15 @@
 import { Controller, Get, Post, Req, UseInterceptors, UploadedFile, Param, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { readdirSync, existsSync, mkdirSync } from 'fs';
+import { readdirSync, existsSync, mkdirSync, createReadStream } from 'fs';
 import { Request } from 'express';
 import { AppService } from './app.service';
+import { MetadataService } from './metadata.service';
 
 @Controller('upload')
 export class UploadController {
+    constructor(private readonly metadataService: MetadataService) {}
+    
     @Post(':id')
     @UseInterceptors(FileInterceptor('file', {
         storage: diskStorage({
@@ -22,6 +25,7 @@ export class UploadController {
         })
     }))
     async uploadFile(@Param('id') userID, @UploadedFile() file) {
+        this.metadataService.addFile(userID, file.originalname, file.filename);
         const response = {
             originalname: file.originalname,
             filename: file.filename
@@ -31,17 +35,6 @@ export class UploadController {
 
     @Get(':id')
     async getAllFiles(@Param('id') userID) {
-        let path = './files/' + userID
-        if (!existsSync(path)) {
-            return {
-                files: []
-            }
-        }
-        else {
-            let directory = readdirSync(path)
-            return {
-                files: directory
-            }
-        }      
+       return this.metadataService.getAllFiles(userID);    
     }
 }
